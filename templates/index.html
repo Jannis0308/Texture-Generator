@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Textur Manager</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+
+    <h1 class="mb-4">Textur Manager</h1>
+
+    <!-- Suchfeld -->
+    <form class="mb-3">
+        <input type="text" name="search" value="{{ search_query }}" placeholder="Suche nach Texturen..." class="form-control">
+        <button type="submit" class="btn btn-primary mt-2">Suchen</button>
+    </form>
+
+    <!-- Texturliste -->
+    <h2>Gespeicherte Texturen</h2>
+    <table class="table">
+        <tr>
+            <th>ID</th>
+            <th>Aktionen</th>
+        </tr>
+        {% for texture_id in textures.keys() %}
+        <tr>
+            <td>{{ texture_id }}</td>
+            <td>
+                <a href="{{ url_for('generate_texture', texture_id=texture_id) }}" class="btn btn-success">Download</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <!-- Neue Textur hinzufügen -->
+    <h2>Neue Textur hinzufügen</h2>
+    <form action="/add_texture" method="post">
+        <div class="mb-3">
+            <label for="texture_id" class="form-label">Textur ID</label>
+            <input type="text" name="texture_id" required class="form-control">
+        </div>
+        <div class="mb-3">
+            <label for="colors" class="form-label">Farben (Format: G1: 111,111,111)</label>
+            <textarea name="colors" rows="4" required class="form-control"></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="pattern" class="form-label">Muster (Format: G1 G2 G3... pro Zeile)</label>
+            <textarea name="pattern" rows="8" required class="form-control"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Textur Speichern</button>
+    </form>
+
+</body>
+</html>
