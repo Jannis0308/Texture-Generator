@@ -21,11 +21,15 @@
     <table class="table">
         <tr>
             <th>ID</th>
+            <th>Vorschau</th>
             <th>Aktionen</th>
         </tr>
         {% for texture_id in textures.keys() %}
         <tr>
             <td>{{ texture_id }}</td>
+            <td>
+                <img src="{{ url_for('static', filename='textures/' + texture_id + '.png') }}" alt="{{ texture_id }}" width="64" height="64">
+            </td>
             <td>
                 <a href="{{ url_for('generate_texture', texture_id=texture_id) }}" class="btn btn-success">Download</a>
             </td>
