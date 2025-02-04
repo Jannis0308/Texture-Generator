@@ -72,7 +72,7 @@ def add_texture():
 def generate_texture(texture_id):
     texture = ref.child(texture_id).get()
     if not texture:
-        return "Textur nicht gefunden", 404
+        return f"Textur mit ID '{texture_id}' nicht gefunden.", 404
 
     colors = texture['colors']
     pattern = texture['pattern']
@@ -93,7 +93,8 @@ def generate_texture(texture_id):
 # API zum Abrufen aller Texturen als JSON
 @app.route('/get_textures', methods=['GET'])
 def get_textures():
-    return jsonify(ref.get() or {})
+    textures = ref.get() or {}
+    return jsonify(textures)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
