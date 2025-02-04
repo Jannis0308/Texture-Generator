@@ -3,11 +3,22 @@ from firebase_admin import credentials, db
 from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
 from PIL import Image
 import os
+import json
 
-# Firebase Admin SDK initialisieren
-cred = credentials.Certificate('/workspaces/Texture-Generator/firebase_credentials.json')
+# 🔥 Firebase Admin SDK mit Umgebungsvariable initialisieren
+firebase_credentials_json = os.getenv("FIREBASE_CREDENTIALS")
+
+if not firebase_credentials_json:
+    raise ValueError("Fehlende Umgebungsvariable: FIREBASE_CREDENTIALS")
+
+try:
+    firebase_credentials = json.loads(firebase_credentials_json)
+except json.JSONDecodeError:
+    raise ValueError("Ungültiges JSON in der Umgebungsvariable FIREBASE_CREDENTIALS")
+
+cred = credentials.Certificate(firebase_credentials)
 firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://textures-5c13e-default-rtdb.europe-west1.firebasedatabase.app/'  # Deine Firebase-Datenbank-URL
+    'databaseURL': 'https://textures-5c13e-default-rtdb.europe-west1.firebasedatabase.app/'
 })
 
 # Zugriff auf die Realtime Database
@@ -23,7 +34,7 @@ os.makedirs(IMAGE_FOLDER, exist_ok=True)
 # Startseite mit Suchfunktion
 @app.route('/')
 def index():
-    search_query = request.args.get('search', '')
+    search_query = request.args.get('search', '').strip()
     all_textures = ref.get() or {}
 
     # Suche nach Texturen
@@ -34,9 +45,12 @@ def index():
 # API zum Speichern einer neuen Textur
 @app.route('/add_texture', methods=['POST'])
 def add_texture():
-    texture_id = request.form['texture_id']
-    colors_input = request.form['colors']
-    pattern_input = request.form['pattern']
+    texture_id = request.form.get('texture_id', '').strip()
+    colors_input = request.form.get('colors', '').strip()
+    pattern_input = request.form.get('pattern', '').strip()
+
+    if not texture_id or not colors_input or not pattern_input:
+        return "Fehlende Daten", 400
 
     # Farben verarbeiten
     colors = {}
@@ -46,7 +60,7 @@ def add_texture():
             colors[code.strip()] = rgb.strip()
 
     # Muster verarbeiten
-    pattern = pattern_input.split("\n")
+    pattern = [line.strip() for line in pattern_input.split("\n") if line.strip()]
 
     # In Firebase speichern
     ref.child(texture_id).set({"colors": colors, "pattern": pattern})
@@ -60,15 +74,21 @@ def generate_texture(texture_id):
     if not texture:
         return "Textur nicht gefunden", 404
 
-    colors = texture['colors']
-    pattern = texture['pattern']
+    colors = texture.get('colors', {})
+    pattern = texture.get('pattern', [])
+
     img = Image.new("RGB", (16, 16), color=(255, 255, 255))
 
-    for y, row in enumerate(pattern):
-        for x, code in enumerate(row.split()):
+    max_size = min(16, len(pattern))
+    for y, row in enumerate(pattern[:max_size]):
+        row_values = row.split()
+        for x, code in enumerate(row_values[:16]):  # Nur 16 Spalten berücksichtigen
             if code in colors:
-                rgb = tuple(map(int, colors[code].split(',')))
-                img.putpixel((x, y), rgb)
+                try:
+                    rgb = tuple(map(int, colors[code].split(',')))
+                    img.putpixel((x, y), rgb)
+                except (ValueError, KeyError):
+                    print(f"Fehlerhafte Farbdefinition für {code}: {colors.get(code, 'N/A')}")
 
     # Bild speichern
     img_path = os.path.join(IMAGE_FOLDER, f"{texture_id}.png")
@@ -82,4 +102,4 @@ def get_textures():
     return jsonify(ref.get() or {})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
