@@ -76,15 +76,21 @@ def generate_texture(texture_id):
 
     colors = texture['colors']
     pattern = texture['pattern']
-    img = Image.new("RGB", (16, 16), color=(255, 255, 255))
+    
+    # Erstelle ein Bild mit Transparenz (RGBA-Modus)
+    img = Image.new("RGBA", (16, 16), color=(255, 255, 255, 0))  # Vollständig transparent
 
     for y, row in enumerate(pattern):
         for x, code in enumerate(row.split()):
             if code in colors:
-                rgb = tuple(map(int, colors[code].split(',')))
-                img.putpixel((x, y), rgb)
+                rgb = colors[code].split(',')
+                if rgb == ["999", "999", "999"]:  
+                    img.putpixel((x, y), (0, 0, 0, 0))  # Transparenter Pixel
+                else:
+                    rgba = tuple(map(int, rgb)) + (255,)  # Volle Deckkraft
+                    img.putpixel((x, y), rgba)
 
-    # Bild speichern im static Ordner
+    # Bild speichern im static-Ordner
     img_path = os.path.join(IMAGE_FOLDER, f"{texture_id}.png")
     img.save(img_path)
 
