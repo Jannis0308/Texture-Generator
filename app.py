@@ -74,23 +74,17 @@ def generate_texture(texture_id):
     if not texture:
         return "Textur nicht gefunden", 404
 
-    colors = texture.get('colors', {})
-    pattern = texture.get('pattern', [])
-
+    colors = texture['colors']
+    pattern = texture['pattern']
     img = Image.new("RGB", (16, 16), color=(255, 255, 255))
 
-    max_size = min(16, len(pattern))
-    for y, row in enumerate(pattern[:max_size]):
-        row_values = row.split()
-        for x, code in enumerate(row_values[:16]):  # Nur 16 Spalten berücksichtigen
+    for y, row in enumerate(pattern):
+        for x, code in enumerate(row.split()):
             if code in colors:
-                try:
-                    rgb = tuple(map(int, colors[code].split(',')))
-                    img.putpixel((x, y), rgb)
-                except (ValueError, KeyError):
-                    print(f"Fehlerhafte Farbdefinition für {code}: {colors.get(code, 'N/A')}")
+                rgb = tuple(map(int, colors[code].split(',')))
+                img.putpixel((x, y), rgb)
 
-    # Bild speichern
+    # Bild speichern im static Ordner
     img_path = os.path.join(IMAGE_FOLDER, f"{texture_id}.png")
     img.save(img_path)
 
