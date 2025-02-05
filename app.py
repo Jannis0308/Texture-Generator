@@ -76,17 +76,6 @@ def add_texture():
     return redirect(url_for('index'))
 
 
-@app.route('/set_default_resolution', methods=['POST'])
-def set_default_resolution():
-    all_textures = ref.get() or {}
-
-    for texture_id, texture_data in all_textures.items():
-        if "resolution" not in texture_data:
-            texture_data["resolution"] = "16x16"
-            ref.child(texture_id).update(texture_data)
-
-    return redirect(url_for('index'))
-
 # API zum Generieren einer Textur
 @app.route('/generate_texture/<texture_id>')
 def generate_texture(texture_id):
