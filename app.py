@@ -37,35 +37,44 @@ def index():
     search_query = request.args.get('search', '').strip()
     all_textures = ref.get() or {}
 
-    # Suche nach Texturen
-    filtered_textures = {key: value for key, value in all_textures.items() if search_query.lower() in key.lower()}
-    
-    return render_template('index.html', textures=filtered_textures, search_query=search_query)
+    # Texturen nach Auflösung gruppieren
+    grouped_textures = {}
+    for key, value in all_textures.items():
+        resolution = value.get("resolution", "Unbekannt")
+        if search_query.lower() in key.lower():
+            if resolution not in grouped_textures:
+                grouped_textures[resolution] = {}
+            grouped_textures[resolution][key] = value
 
-# API zum Speichern einer neuen Textur
+    return render_template('index.html', textures=grouped_textures, search_query=search_query)
+
 @app.route('/add_texture', methods=['POST'])
 def add_texture():
     texture_id = request.form.get('texture_id', '').strip()
     colors_input = request.form.get('colors', '').strip()
     pattern_input = request.form.get('pattern', '').strip()
+    resolution = request.form.get('resolution', '16x16').strip()
 
     if not texture_id or not colors_input or not pattern_input:
         return "Fehlende Daten", 400
 
-    # Farben verarbeiten
     colors = {}
     for line in colors_input.split("\n"):
         if ":" in line:
             code, rgb = line.split(":")
             colors[code.strip()] = rgb.strip()
 
-    # Muster verarbeiten
     pattern = [line.strip() for line in pattern_input.split("\n") if line.strip()]
 
-    # In Firebase speichern
-    ref.child(texture_id).set({"colors": colors, "pattern": pattern})
+    # Textur mit Auflösung speichern
+    ref.child(texture_id).set({
+        "colors": colors,
+        "pattern": pattern,
+        "resolution": resolution
+    })
 
     return redirect(url_for('index'))
+
 
 # API zum Generieren einer Textur
 @app.route('/generate_texture/<texture_id>')
